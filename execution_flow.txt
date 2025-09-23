@@ -1,0 +1,44 @@
+# TRADING STRATEGY SYSTEM - EXECUTION FLOW REFERENCE
+# Main Entry: new12.py -> main()
+
+# STRATEGY SELECTION:
+# Choice 1: Single Condition Strategy
+# Choice 2: Multi-Condition Strategy  
+# Choice 3: Multi-Ticker Portfolio (Same strategy)
+# Choice 4: Multi-Ticker Multi-Strategy (Different per ticker)
+
+# CHOICE 1: SINGLE CONDITION STRATEGY
+# Flow: main() -> show_trading_examples() -> get_strategy_inputs() -> run_trading_strategy()
+# Files: new12.py -> display.py -> inputs.py -> new12.py -> portfolios.py -> display.py
+# Key Functions: download_and_prepare_data(), detect_strategy_signals(), execute_trading_strategy(), display_results()
+
+# CHOICE 2: MULTI-CONDITION STRATEGY
+# Flow: main() -> get_multi_strategy_inputs() -> run_multi_condition_strategy()
+# Files: new12.py -> inputs.py -> new12.py -> portfolios.py -> new12.py
+# Key Functions: detect_multi_strategy_signals(), entry_multi_detector, exit_multi_detector
+# Note: Can run single strategy by setting N=1 for conditions
+
+# CHOICE 3: MULTI-TICKER PORTFOLIO (Same strategy for all)
+# Flow: main() -> get_multi_ticker_inputs() -> run_multi_ticker_strategy()
+# Files: new12.py -> inputs.py -> new12.py -> portfolios.py
+# Key Functions: MultiTickerPortfolio(), portfolio.run_strategy_on_ticker(), display_combined_results()
+
+# CHOICE 4: MULTI-TICKER MULTI-STRATEGY (Different strategy per ticker)
+# Flow: main() -> get_multi_ticker_multi_strategy_inputs() -> run_multi_ticker_multi_strategy()
+# Files: new12.py -> inputs.py -> new12.py -> portfolios.py
+# Key Functions: MultiTickerMultiStrategyPortfolio(), individual strategies per ticker
+
+# CORE COMPONENTS:
+# inputs.py: User input collection, download_and_prepare_data(), detect_multi_strategy_signals()
+# new12.py: Main execution, signal detection, strategy execution, multi-condition detectors
+# portfolios.py: Portfolio classes, trade execution methods
+# indicators.py: IndicatorRegistry, 90+ indicators, calculate_indicator()
+# metrics.py: Performance calculations, calculate_advanced_metrics(), risk metrics
+# display.py: Results formatting, performance display, trade history
+# comparisons.py: Comparison functions (crossed_up, greater_than, etc.)
+# comparision_types.py: ComparisonType enum
+
+# KEY ANSWERS:
+# Q: Can Multi-Condition run single strategy? A: YES - Set N=1 for conditions
+# Q: Default values? A: All inputs have [default: 1] handling
+# Q: File roles? A: See execution flows above
