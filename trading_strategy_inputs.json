@@ -1,0 +1,280 @@
+{
+  "trading_strategy_system": {
+    "main_options": {
+      "1": "Single Condition Strategy (Original)",
+      "2": "Multi-Condition Strategy", 
+      "3": "Multi-Ticker Portfolio Strategy (Same strategy for all)",
+      "4": "Multi-Ticker Multi-Strategy Portfolio (Different strategy per ticker)"
+    },
+    
+    "strategy_directions": {
+      "1": "Long Only (Buy on crossover, sell on crossdown)",
+      "2": "Short Only (Sell on crossdown, buy on crossover)",
+      "3": "Long/Short Reversal (Flip positions automatically)"
+    },
+    
+    "time_periods": {
+      "1": "1 year",
+      "2": "2 years", 
+      "3": "5 years",
+      "4": "10 years",
+      "5": "Custom period"
+    },
+    
+    "data_intervals": {
+      "1": "1 minute",
+      "2": "5 minutes",
+      "3": "15 minutes", 
+      "4": "30 minutes",
+      "5": "1 hour",
+      "6": "4 hours",
+      "7": "1 day",
+      "8": "1 week",
+      "9": "1 month",
+      "10": "Custom interval"
+    },
+    
+    "comparison_types": {
+      "1": "Indicators (Active)",
+      "2": "Constant Value (Active)",
+      "3": "Price (Active)"
+    },
+    
+    "indicators": {
+      "1": "SMA",
+      "2": "EMA", 
+      "3": "RSI",
+      "4": "RSI2",
+      "5": "SSMA",
+      "6": "EMA2",
+      "7": "MOMENTUM",
+      "8": "OBV",
+      "9": "TYPICAL_PRICE",
+      "10": "VWAP",
+      "11": "MARKET_MOMENTUM",
+      "12": "ALL_MA",
+      "13": "ALMA",
+      "14": "DEMA",
+      "15": "HULL_MA",
+      "16": "KAMA",
+      "17": "JMA",
+      "18": "FRAMA",
+      "19": "SEMA",
+      "20": "TRIANGULAR_MA",
+      "21": "T3_MA",
+      "22": "ZLEMA",
+      "23": "ZLSMA",
+      "24": "WMA",
+      "25": "VWMA",
+      "26": "SINE_WMA",
+      "27": "PASCAL_WMA",
+      "28": "SYMMETRIC_WMA",
+      "29": "FIBONACCI_WMA",
+      "30": "HOLT_WINTER_MA",
+      "31": "HULL_EMA",
+      "32": "MCGINLEY_DYNAMIC",
+      "33": "EVMA",
+      "34": "AOBV",
+      "35": "EV_MACD",
+      "36": "FVE",
+      "37": "KVO",
+      "38": "NVI",
+      "39": "PVO",
+      "40": "PVI",
+      "41": "PVR",
+      "42": "PVT",
+      "43": "PV",
+      "44": "VAMA",
+      "45": "VFI",
+      "46": "VPT",
+      "47": "VP",
+      "48": "VZO",
+      "49": "VW_MACD",
+      "50": "WOBV",
+      "51": "APO",
+      "52": "APZ",
+      "53": "AP",
+      "54": "DP",
+      "55": "DPO",
+      "56": "IP",
+      "57": "MP",
+      "58": "MPP",
+      "59": "PPO",
+      "60": "PD",
+      "61": "WCP",
+      "62": "ADX",
+      "63": "CMO",
+      "64": "DM",
+      "65": "TS",
+      "66": "STC",
+      "67": "WTO",
+      "68": "PDI",
+      "69": "MDI",
+      "70": "PDM",
+      "71": "MDM",
+      "72": "MBB"
+    },
+    
+    "strategies": {
+      "1": "CROSSED UP",
+      "2": "CROSSED DOWN",
+      "3": "GREATER THAN",
+      "4": "LESS THAN",
+      "5": "EQUAL",
+      "6": "GREATER OR EQUAL",
+      "7": "LESS OR EQUAL",
+      "8": "WITHIN RANGE",
+      "9": "INCREASED",
+      "10": "DECREASED",
+      "11": "CROSSED"
+    },
+    
+    "logic_types": {
+      "1": "AND - All conditions must be true",
+      "2": "OR - Any condition can be true"
+    },
+    
+    "candles_ago_options": {
+      "0": "Current candle (0 candles ago)",
+      "1": "Previous candle (1 candle ago)",
+      "2": "Two candles ago",
+      "3": "Three candles ago",
+      "4": "Four candles ago",
+      "5": "Five candles ago",
+      "6": "Custom"
+    },
+    
+    "price_columns": {
+      "1": "Open",
+      "2": "High", 
+      "3": "Low",
+      "4": "Close",
+      "5": "Volume"
+    },
+    
+    "default_values": {
+      "main_choice": "1",
+      "strategy_direction": "1",
+      "time_period": "1",
+      "data_interval": "1",
+      "comparison_type": "1",
+      "indicator": "1",
+      "strategy": "1",
+      "logic_type": "1",
+      "candles_ago": "0",
+      "price_column": "4",
+      "number_of_tickers": "1",
+      "total_capital": "10000",
+      "allocation_percentage": "100",
+      "trade_size_percentage": "10",
+      "number_of_conditions": "1",
+      "trailing_stop": "n"
+    },
+    
+    "input_validation": {
+      "ticker_symbols": {
+        "description": "Stock ticker symbols (e.g., AAPL, MSFT, TSLA)",
+        "format": "Uppercase letters, 1-5 characters",
+        "examples": ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"]
+      },
+      "capital_amounts": {
+        "description": "Portfolio capital in USD",
+        "format": "Positive numbers",
+        "examples": [1000, 5000, 10000, 50000, 100000]
+      },
+      "percentages": {
+        "description": "Allocation and trade size percentages",
+        "format": "Numbers 0-100",
+        "validation": "Must total 100% for allocations"
+      },
+      "periods": {
+        "description": "Indicator calculation periods",
+        "format": "Positive integers",
+        "examples": [5, 10, 20, 50, 100, 200]
+      },
+      "candles_ago": {
+        "description": "Number of candles to look back",
+        "format": "Integers 0-20",
+        "default": 0
+      }
+    },
+    
+    "strategy_examples": {
+      "single_condition": {
+        "entry": "SMA(20) CROSSED UP SMA(25)",
+        "exit": "SMA(20) CROSSED DOWN SMA(25)",
+        "description": "Simple moving average crossover strategy"
+      },
+      "multi_condition": {
+        "entry": "SMA(10) > SMA(20) AND RSI > 30 AND Volume > Average",
+        "exit": "SMA(10) < SMA(20) OR RSI < 70",
+        "description": "Multiple conditions with AND/OR logic"
+      },
+      "multi_ticker": {
+        "description": "Same strategy applied to multiple stocks",
+        "example": "40% AAPL, 60% MSFT with SMA crossover"
+      },
+      "multi_strategy": {
+        "description": "Different strategy for each ticker",
+        "example": "AAPL with SMA crossover, MSFT with EMA crossover"
+      }
+    },
+    
+    "risk_management": {
+      "trailing_stop": {
+        "description": "Follows price up to protect profits",
+        "example": "Buy at $100, set 5% trailing stop: At $105 stop moves to $99.75"
+      },
+      "trade_sizing": {
+        "percentage": "Use X% of available capital per trade",
+        "dollars": "Use fixed dollar amount per trade"
+      },
+      "position_sizing": {
+        "description": "How much capital to allocate per position",
+        "options": ["Percentage of portfolio", "Fixed dollar amount"]
+      }
+    },
+    
+    "output_metrics": {
+      "financial_summary": [
+        "Initial Investment",
+        "Final Portfolio Value", 
+        "Total Return",
+        "Return Percentage",
+        "Total Trades"
+      ],
+      "advanced_metrics": [
+        "Annual Return",
+        "Cumulative Return",
+        "Sharpe Ratio",
+        "Volatility",
+        "Max Drawdown",
+        "Win Rate",
+        "Profit Factor"
+      ],
+      "trade_history": [
+        "Date",
+        "Action",
+        "Price", 
+        "Shares",
+        "Value",
+        "Cash Remaining"
+      ]
+    },
+    
+    "file_structure": {
+      "main_files": [
+        "new12.py - Main execution and strategy logic",
+        "inputs.py - User input collection and validation",
+        "portfolios.py - Portfolio management and trade execution",
+        "display.py - Results display and formatting",
+        "indicators.py - Technical indicator calculations",
+        "metrics.py - Performance calculations"
+      ],
+      "supporting_files": [
+        "comparisons.py - Comparison logic",
+        "execution_flow.txt - System flow documentation"
+      ]
+    }
+  }
+}

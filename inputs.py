@@ -693,6 +693,9 @@ def get_multi_condition_inputs(condition_type, num_conditions):
             comp1_name = "PRICE"
             comp1_params = (get_price_column(),)
         
+        # Get candles ago for comparison 1
+        comp1_candles_ago = get_candles_ago(f"Condition {i+1} - Comparison 1")
+        
         # Strategy
         strategy = get_strategy_selection()
         if strategy is None:
@@ -716,10 +719,13 @@ def get_multi_condition_inputs(condition_type, num_conditions):
             comp2_name = "PRICE"
             comp2_params = (get_price_column(),)
         
+        # Get candles ago for comparison 2
+        comp2_candles_ago = get_candles_ago(f"Condition {i+1} - Comparison 2")
+        
         conditions.append({
             'comp1_type': comp1_type, 'comp1_name': comp1_name, 'comp1_params': comp1_params,
             'comp2_type': comp2_type, 'comp2_name': comp2_name, 'comp2_params': comp2_params,
-            'strategy': strategy
+            'strategy': strategy, 'comp1_candles_ago': comp1_candles_ago, 'comp2_candles_ago': comp2_candles_ago
         })
     
     return conditions

@@ -3,7 +3,7 @@ from metrics import *
 from display import *
 from comparisons import *
 from inputs import *
-from new12 import execute_trading_strategy, detect_strategy_signals
+from new12 import execute_trading_strategy, detect_strategy_signals, execute_trading_strategy_original
 
 
 
@@ -584,8 +584,13 @@ class MultiTickerPortfolio:
             strategy_config['exit_comp1_candles_ago'], strategy_config['exit_comp2_candles_ago']  # candles_ago
         )
         
-        # Execute trading strategy
-        data = execute_trading_strategy(data, portfolio)
+        # Execute trading strategy based on direction
+        strategy_direction = strategy_config.get('strategy_direction', 'Long Only')
+        if strategy_direction == "Long/Short Reversal":
+            data = execute_trading_strategy(data, portfolio)
+        else:
+            # For Long Only and Short Only, use the original logic
+            data = execute_trading_strategy_original(data, portfolio, strategy_direction)
         
         # Store portfolio and performance
         self.portfolios[ticker] = portfolio
@@ -786,8 +791,13 @@ class MultiTickerMultiStrategyPortfolio:
                 strategy_config['entry_logic'], strategy_config['exit_logic']
             )
         
-        # Execute trading strategy
-        data = execute_trading_strategy(data, portfolio)
+        # Execute trading strategy based on direction
+        strategy_direction = self.ticker_strategies[ticker].get('strategy_direction', 'Long Only')
+        if strategy_direction == "Long/Short Reversal":
+            data = execute_trading_strategy(data, portfolio)
+        else:
+            # For Long Only and Short Only, use the original logic
+            data = execute_trading_strategy_original(data, portfolio, strategy_direction)
         
         # Store performance
         final_price = data['Close'].iloc[-1]
@@ -874,7 +884,15 @@ class MultiTickerMultiStrategyPortfolio:
                 print(f"{'Date':<12} {'Action':<6} {'Price':<8} {'Shares':<10} {'Value':<10} {'Cash':<10} {'Available':<10}")
                 print("-" * 80)
                 for trade in portfolio.trades:
-                    value = trade['cost'] if trade['action'] == 'BUY' else trade['proceeds']
+                    # Handle different trade types
+                    if trade['action'] in ['BUY', 'LONG', 'SHORT']:
+                        value = trade['cost']
+                    elif trade['action'] in ['SELL', 'EXIT_LONG']:
+                        value = trade.get('proceeds', trade.get('cost', 0))
+                    elif trade['action'] == 'EXIT_SHORT':
+                        value = trade['cost']
+                    else:
+                        value = trade.get('proceeds', trade.get('cost', 0))
                     print(f"{trade['date']:<12} {trade['action']:<6} ${trade['price']:<7.2f} {trade['shares']:<10.4f} "
                           f"${value:<9.2f} ${trade['cash_remaining']:<9.2f} ${trade['available_cash']:<9.2f}")
         
@@ -968,7 +986,15 @@ class MultiTickerMultiStrategyPortfolio:
                 print(f"{'Date':<12} {'Action':<6} {'Price':<8} {'Shares':<10} {'Value':<10} {'Cash':<10} {'Available':<10}")
                 print("-" * 80)
                 for trade in portfolio.trades:
-                    value = trade['cost'] if trade['action'] == 'BUY' else trade['proceeds']
+                    # Handle different trade types
+                    if trade['action'] in ['BUY', 'LONG', 'SHORT']:
+                        value = trade['cost']
+                    elif trade['action'] in ['SELL', 'EXIT_LONG']:
+                        value = trade.get('proceeds', trade.get('cost', 0))
+                    elif trade['action'] == 'EXIT_SHORT':
+                        value = trade['cost']
+                    else:
+                        value = trade.get('proceeds', trade.get('cost', 0))
                     print(f"{trade['date']:<12} {trade['action']:<6} ${trade['price']:<7.2f} {trade['shares']:<10.4f} "
                           f"${value:<9.2f} ${trade['cash_remaining']:<9.2f} ${trade['available_cash']:<9.2f}")
         

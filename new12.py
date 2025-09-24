@@ -530,7 +530,7 @@ entry_multi_detector = MultiConditionDetector()
 exit_multi_detector = MultiConditionDetector()
 
 
-def run_multi_condition_strategy(ticker, period, interval, entry_conditions, exit_conditions, entry_logic='AND', exit_logic='AND'):
+def run_multi_condition_strategy(ticker, period, interval, entry_conditions, exit_conditions, entry_logic='AND', exit_logic='AND', strategy_direction="Long Only"):
     """Run a multi-condition trading strategy"""
     # Download and prepare data
     data = download_and_prepare_data(ticker, period, interval)
@@ -571,8 +571,12 @@ def run_multi_condition_strategy(ticker, period, interval, entry_conditions, exi
     else:
         print("Trailing stop disabled - using regular risk management only")
     
-    # Execute trading strategy
-    data = execute_trading_strategy(data, portfolio)
+    # Execute trading strategy based on direction
+    if strategy_direction == "Long/Short Reversal":
+        data = execute_trading_strategy(data, portfolio)
+    else:
+        # For Long Only and Short Only, use the original logic
+        data = execute_trading_strategy_original(data, portfolio, strategy_direction)
     
     # Display results
     display_multi_condition_results(ticker, data, portfolio, entry_conditions, exit_conditions, entry_logic, exit_logic)
@@ -689,6 +693,7 @@ def run_multi_ticker_strategy(config):
     print(f"Total Capital: ${config['total_capital']:,.2f}")
     print(f"Allocations: {config['allocations']}")
     print(f"Trade Sizes: {config['trade_sizes']}")
+    print(f"Strategy Direction: {config['strategy_direction']}")
     
     # Initialize multi-ticker portfolio
     portfolio = MultiTickerPortfolio(config['total_capital'], config['allocations'], config['trade_sizes'])
@@ -721,6 +726,12 @@ def run_multi_ticker_multi_strategy(config):
     print(f"Total Capital: ${config['total_capital']:,.2f}")
     print(f"Allocations: {config['allocations']}")
     print(f"Trade Sizes: {config['trade_sizes']}")
+    print(f"Strategy Direction: {config['strategy_direction']}")
+    
+    # Add strategy direction to each ticker's strategy config
+    for ticker in config['tickers']:
+        if ticker in config['ticker_strategies']:
+            config['ticker_strategies'][ticker]['strategy_direction'] = config['strategy_direction']
     
     # Initialize multi-strategy portfolio
     portfolio = MultiTickerMultiStrategyPortfolio(
@@ -817,26 +828,134 @@ def main():
     
     elif choice == "2":
         # Multi-condition system
+        # Ask for strategy direction first
+        print("\n--- STRATEGY DIRECTION ---")
+        print("1. Long Only (Buy on crossover, sell on crossdown)")
+        print("2. Short Only (Sell on crossdown, buy on crossover)")
+        print("3. Long/Short Reversal (Flip positions automatically)")
+        
+        while True:
+            try:
+                direction_choice = input("Enter choice (1-3) [default: 1]: ").strip()
+                
+                # If empty input, default to 1
+                if not direction_choice:
+                    direction_choice = "1"
+                
+                direction_map = {
+                    "1": "Long Only",
+                    "2": "Short Only", 
+                    "3": "Long/Short Reversal"
+                }
+                
+                if direction_choice in direction_map:
+                    strategy_direction = direction_map[direction_choice]
+                    break
+                else:
+                    print("❌ Invalid choice! Please enter 1, 2, or 3.")
+                    continue
+                    
+            except KeyboardInterrupt:
+                print("\n❌ Operation cancelled!")
+                return
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                return
+        
         inputs = get_multi_strategy_inputs()
         if inputs is None:
             return
         
         ticker, period, interval, entry_conditions, exit_conditions, entry_logic, exit_logic = inputs
-        run_multi_condition_strategy(ticker, period, interval, entry_conditions, exit_conditions, entry_logic, exit_logic)
+        run_multi_condition_strategy(ticker, period, interval, entry_conditions, exit_conditions, entry_logic, exit_logic, strategy_direction)
     
     elif choice == "3":
         # Multi-ticker portfolio system
+        # Ask for strategy direction first
+        print("\n--- STRATEGY DIRECTION ---")
+        print("1. Long Only (Buy on crossover, sell on crossdown)")
+        print("2. Short Only (Sell on crossdown, buy on crossover)")
+        print("3. Long/Short Reversal (Flip positions automatically)")
+        
+        while True:
+            try:
+                direction_choice = input("Enter choice (1-3) [default: 1]: ").strip()
+                
+                # If empty input, default to 1
+                if not direction_choice:
+                    direction_choice = "1"
+                
+                direction_map = {
+                    "1": "Long Only",
+                    "2": "Short Only", 
+                    "3": "Long/Short Reversal"
+                }
+                
+                if direction_choice in direction_map:
+                    strategy_direction = direction_map[direction_choice]
+                    break
+                else:
+                    print("❌ Invalid choice! Please enter 1, 2, or 3.")
+                    continue
+                    
+            except KeyboardInterrupt:
+                print("\n❌ Operation cancelled!")
+                return
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                return
+        
         config = get_multi_ticker_inputs()
         if config is None:
             return
+        
+        # Add strategy direction to config
+        config['strategy_direction'] = strategy_direction
         
         run_multi_ticker_strategy(config)
     
     elif choice == "4":
         # Multi-ticker multi-strategy system
+        # Ask for strategy direction first
+        print("\n--- STRATEGY DIRECTION ---")
+        print("1. Long Only (Buy on crossover, sell on crossdown)")
+        print("2. Short Only (Sell on crossdown, buy on crossover)")
+        print("3. Long/Short Reversal (Flip positions automatically)")
+        
+        while True:
+            try:
+                direction_choice = input("Enter choice (1-3) [default: 1]: ").strip()
+                
+                # If empty input, default to 1
+                if not direction_choice:
+                    direction_choice = "1"
+                
+                direction_map = {
+                    "1": "Long Only",
+                    "2": "Short Only", 
+                    "3": "Long/Short Reversal"
+                }
+                
+                if direction_choice in direction_map:
+                    strategy_direction = direction_map[direction_choice]
+                    break
+                else:
+                    print("❌ Invalid choice! Please enter 1, 2, or 3.")
+                    continue
+                    
+            except KeyboardInterrupt:
+                print("\n❌ Operation cancelled!")
+                return
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                return
+        
         config = get_multi_ticker_multi_strategy_inputs()
         if config is None:
             return
+        
+        # Add strategy direction to config
+        config['strategy_direction'] = strategy_direction
         
         run_multi_ticker_multi_strategy(config)
     
