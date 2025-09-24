@@ -297,49 +297,38 @@ def execute_trading_strategy(data, portfolio):
                     current_position = 'OUT'
                     continue  # Skip normal strategy signals if risk order triggered
         
-        # Check if we can ENTER LONG (currently OUT and long entry signal is True)
-        if current_position == 'OUT' and data['Entry_Signal'].iloc[i]:
-            # Check if we have long/short specific signals
-            if 'Long_Entry_Signal' in data.columns and data['Long_Entry_Signal'].iloc[i]:
+        # LONG/SHORT REVERSAL LOGIC
+        # Entry Signal (SMA Crossover) - Enter LONG or flip from SHORT to LONG
+        if data['Entry_Signal'].iloc[i]:
+            if current_position == 'OUT' or current_position == 'SHORT':
+                # Exit SHORT if currently short
+                if current_position == 'SHORT':
+                    if portfolio.exit_position(current_price, current_date, reason="Short to Long Flip"):
+                        data.loc[i, 'Action'] = 'EXIT_SHORT'
+                        data.loc[i, 'Reason'] = 'Short to Long Flip'
+                
+                # Enter LONG
                 if portfolio.enter_long(current_price, current_date):
                     data.loc[i, 'Position'] = 'LONG'
                     data.loc[i, 'Action'] = 'LONG'
-                    data.loc[i, 'Reason'] = 'Long Strategy Entry'
+                    data.loc[i, 'Reason'] = 'Long Strategy Entry' if current_position == 'OUT' else 'Short to Long Flip'
                     current_position = 'LONG'
-            elif 'Short_Entry_Signal' in data.columns and data['Short_Entry_Signal'].iloc[i]:
+        
+        # Exit Signal (SMA Crossdown) - Enter SHORT or flip from LONG to SHORT  
+        elif data['Exit_Signal'].iloc[i]:
+            if current_position == 'OUT' or current_position == 'LONG':
+                # Exit LONG if currently long
+                if current_position == 'LONG':
+                    if portfolio.exit_position(current_price, current_date, reason="Long to Short Flip"):
+                        data.loc[i, 'Action'] = 'EXIT_LONG'
+                        data.loc[i, 'Reason'] = 'Long to Short Flip'
+                
+                # Enter SHORT
                 if portfolio.enter_short(current_price, current_date):
                     data.loc[i, 'Position'] = 'SHORT'
                     data.loc[i, 'Action'] = 'SHORT'
-                    data.loc[i, 'Reason'] = 'Short Strategy Entry'
+                    data.loc[i, 'Reason'] = 'Short Strategy Entry' if current_position == 'OUT' else 'Long to Short Flip'
                     current_position = 'SHORT'
-            else:
-                # Legacy: use regular buy for long-only
-                if portfolio.buy(current_price, current_date):
-                    data.loc[i, 'Position'] = 'IN'
-                    data.loc[i, 'Action'] = 'BUY'
-                    data.loc[i, 'Reason'] = 'Strategy Entry'
-                    current_position = 'IN'
-        
-        # Check if we can EXIT (currently IN/LONG/SHORT and exit signal is True)
-        elif current_position in ['IN', 'LONG', 'SHORT'] and data['Exit_Signal'].iloc[i]:
-            if current_position == 'LONG':
-                if portfolio.exit_position(current_price, current_date, reason="Long Strategy Exit"):
-                    data.loc[i, 'Position'] = 'OUT'
-                    data.loc[i, 'Action'] = 'EXIT_LONG'
-                    data.loc[i, 'Reason'] = 'Long Strategy Exit'
-                    current_position = 'OUT'
-            elif current_position == 'SHORT':
-                if portfolio.exit_position(current_price, current_date, reason="Short Strategy Exit"):
-                    data.loc[i, 'Position'] = 'OUT'
-                    data.loc[i, 'Action'] = 'EXIT_SHORT'
-                    data.loc[i, 'Reason'] = 'Short Strategy Exit'
-                    current_position = 'OUT'
-            else:  # Legacy IN position
-                if portfolio.sell(current_price, current_date, reason="Strategy Exit"):
-                    data.loc[i, 'Position'] = 'OUT'
-                    data.loc[i, 'Action'] = 'SELL'
-                    data.loc[i, 'Reason'] = 'Strategy Exit'
-                    current_position = 'OUT'
         
         # No action - maintain current position
         else:
@@ -351,6 +340,103 @@ def execute_trading_strategy(data, portfolio):
         data.loc[i, 'Portfolio_Value'] = portfolio.get_portfolio_value(current_price)
         data.loc[i, 'Cash'] = portfolio.cash
         data.loc[i, 'Shares'] = portfolio.shares  # Legacy support
+        data.loc[i, 'Long_Shares'] = portfolio.long_shares
+        data.loc[i, 'Short_Shares'] = portfolio.short_shares
+        data.loc[i, 'Position_Type'] = portfolio.position
+    
+    return data
+
+def execute_trading_strategy_original(data, portfolio, strategy_direction):
+    """Execute trading strategy for Long Only or Short Only"""
+    # Initialize tracking columns
+    data['Position'] = 'OUT'
+    data['Action'] = ''
+    data['Portfolio_Value'] = 0.0
+    data['Cash'] = 0.0
+    data['Shares'] = 0.0
+    data['Long_Shares'] = 0.0
+    data['Short_Shares'] = 0.0
+    data['Position_Type'] = 'OUT'
+    data['Reason'] = ''
+
+    current_position = 'OUT'
+
+    for i in range(len(data)):
+        current_price = data['Close'].iloc[i]
+        current_date = data.index[i]
+        
+        # Risk management checks (same as before)
+        if current_position == 'IN':
+            trailing_result = portfolio.update_trailing_stop(current_price)
+            if trailing_result == "trailing_stop_triggered":
+                if portfolio.sell(current_price, current_date, reason="Trailing stop triggered"):
+                    current_position = 'OUT'
+                    data.loc[i, 'Action'] = 'SELL'
+                    data.loc[i, 'Reason'] = 'Trailing stop triggered'
+                    data.loc[i, 'Position'] = 'OUT'
+                    data.loc[i, 'Portfolio_Value'] = portfolio.get_portfolio_value(current_price)
+                    data.loc[i, 'Cash'] = portfolio.cash
+                    data.loc[i, 'Shares'] = portfolio.shares
+                    continue
+        
+        if current_position == 'IN':
+            risk_action, risk_reason = portfolio.check_risk_orders(current_price, current_date)
+            if risk_action == "EXIT":
+                if portfolio.sell(current_price, current_date, reason=risk_reason):
+                    data.loc[i, 'Position'] = 'OUT'
+                    data.loc[i, 'Action'] = 'SELL'
+                    data.loc[i, 'Reason'] = risk_reason
+                    current_position = 'OUT'
+                    continue
+            elif risk_action == "SELL":
+                if portfolio.sell(current_price, current_date, reason=risk_reason):
+                    data.loc[i, 'Position'] = 'OUT'
+                    data.loc[i, 'Action'] = 'SELL'
+                    data.loc[i, 'Reason'] = risk_reason
+                    current_position = 'OUT'
+                    continue
+        
+        # Strategy-specific logic
+        if strategy_direction == "Long Only":
+            # Long Only: Buy on entry signal, sell on exit signal
+            if current_position == 'OUT' and data['Entry_Signal'].iloc[i]:
+                if portfolio.buy(current_price, current_date):
+                    data.loc[i, 'Position'] = 'IN'
+                    data.loc[i, 'Action'] = 'BUY'
+                    data.loc[i, 'Reason'] = 'Strategy Entry'
+                    current_position = 'IN'
+            elif current_position == 'IN' and data['Exit_Signal'].iloc[i]:
+                if portfolio.sell(current_price, current_date, reason="Strategy Exit"):
+                    data.loc[i, 'Position'] = 'OUT'
+                    data.loc[i, 'Action'] = 'SELL'
+                    data.loc[i, 'Reason'] = 'Strategy Exit'
+                    current_position = 'OUT'
+                    
+        elif strategy_direction == "Short Only":
+            # Short Only: Short on exit signal, cover on entry signal
+            if current_position == 'OUT' and data['Exit_Signal'].iloc[i]:
+                if portfolio.enter_short(current_price, current_date):
+                    data.loc[i, 'Position'] = 'SHORT'
+                    data.loc[i, 'Action'] = 'SHORT'
+                    data.loc[i, 'Reason'] = 'Short Strategy Entry'
+                    current_position = 'SHORT'
+            elif current_position == 'SHORT' and data['Entry_Signal'].iloc[i]:
+                if portfolio.exit_position(current_price, current_date, reason="Short Strategy Exit"):
+                    data.loc[i, 'Position'] = 'OUT'
+                    data.loc[i, 'Action'] = 'EXIT_SHORT'
+                    data.loc[i, 'Reason'] = 'Short Strategy Exit'
+                    current_position = 'OUT'
+        
+        # No action - maintain current position
+        else:
+            data.loc[i, 'Position'] = current_position
+            data.loc[i, 'Action'] = ''
+            data.loc[i, 'Reason'] = 'Hold'
+        
+        # Update portfolio tracking
+        data.loc[i, 'Portfolio_Value'] = portfolio.get_portfolio_value(current_price)
+        data.loc[i, 'Cash'] = portfolio.cash
+        data.loc[i, 'Shares'] = portfolio.shares
         data.loc[i, 'Long_Shares'] = portfolio.long_shares
         data.loc[i, 'Short_Shares'] = portfolio.short_shares
         data.loc[i, 'Position_Type'] = portfolio.position
@@ -566,7 +652,7 @@ def run_trading_strategy(ticker, period, interval, entry_comp1_type, entry_comp1
                         exit_comp1_type, exit_comp1_name, exit_comp1_params,
                         exit_comp2_type, exit_comp2_name, exit_comp2_params,
                         entry_strategy, exit_strategy, entry_comp1_candles_ago=0, 
-                        entry_comp2_candles_ago=0, exit_comp1_candles_ago=0, exit_comp2_candles_ago=0):
+                        entry_comp2_candles_ago=0, exit_comp1_candles_ago=0, exit_comp2_candles_ago=0, strategy_direction="Long Only"):
     """Run a complete trading strategy with candles ago logic"""
     # Download and prepare data
     data = download_and_prepare_data(ticker, period, interval)
@@ -584,8 +670,12 @@ def run_trading_strategy(ticker, period, interval, entry_comp1_type, entry_comp1
     # Initialize portfolio
     portfolio = Portfolio(10000)  # Start with $10,000
     
-    # Execute trading strategy
-    data = execute_trading_strategy(data, portfolio)
+    # Execute trading strategy based on direction
+    if strategy_direction == "Long/Short Reversal":
+        data = execute_trading_strategy(data, portfolio)
+    else:
+        # For Long Only and Short Only, use the original logic
+        data = execute_trading_strategy_original(data, portfolio, strategy_direction)
     
     # Display results
     display_results(ticker, data, portfolio, entry_comp1_name, entry_comp2_name,
@@ -672,6 +762,40 @@ def main():
     
     if choice == "1":
         # Original single condition system
+        # Ask for strategy direction first
+        print("\n--- STRATEGY DIRECTION ---")
+        print("1. Long Only (Buy on crossover, sell on crossdown)")
+        print("2. Short Only (Sell on crossdown, buy on crossover)")
+        print("3. Long/Short Reversal (Flip positions automatically)")
+        
+        while True:
+            try:
+                direction_choice = input("Enter choice (1-3) [default: 1]: ").strip()
+                
+                # If empty input, default to 1
+                if not direction_choice:
+                    direction_choice = "1"
+                
+                direction_map = {
+                    "1": "Long Only",
+                    "2": "Short Only", 
+                    "3": "Long/Short Reversal"
+                }
+                
+                if direction_choice in direction_map:
+                    strategy_direction = direction_map[direction_choice]
+                    break
+                else:
+                    print("❌ Invalid choice! Please enter 1, 2, or 3.")
+                    continue
+                    
+            except KeyboardInterrupt:
+                print("\n❌ Operation cancelled!")
+                return
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                return
+        
         show_trading_examples()
         inputs = get_strategy_inputs()
         if inputs is None:
@@ -689,7 +813,7 @@ def main():
                             exit_comp1_type, exit_comp1_name, exit_comp1_params,
                             exit_comp2_type, exit_comp2_name, exit_comp2_params,
                             entry_strategy, exit_strategy, entry_comp1_candles_ago, entry_comp2_candles_ago,
-                            exit_comp1_candles_ago, exit_comp2_candles_ago)
+                            exit_comp1_candles_ago, exit_comp2_candles_ago, strategy_direction)
     
     elif choice == "2":
         # Multi-condition system

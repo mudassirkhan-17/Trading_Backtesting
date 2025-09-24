@@ -132,6 +132,40 @@ def get_strategy_inputs():
             entry_strategy, exit_strategy, entry_comp1_candles_ago, entry_comp2_candles_ago,
             exit_comp1_candles_ago, exit_comp2_candles_ago)
 
+def get_strategy_direction():
+    """Get strategy direction selection"""
+    print("\n--- STRATEGY DIRECTION ---")
+    print("1. Long Only (Buy on crossover, sell on crossdown)")
+    print("2. Short Only (Sell on crossdown, buy on crossover)")
+    print("3. Long/Short Reversal (Flip positions automatically)")
+    
+    while True:
+        try:
+            choice = input("Enter choice (1-3) [default: 1]: ").strip()
+            
+            # If empty input, default to 1
+            if not choice:
+                choice = "1"
+            
+            direction_map = {
+                "1": "Long Only",
+                "2": "Short Only", 
+                "3": "Long/Short Reversal"
+            }
+            
+            if choice in direction_map:
+                return direction_map[choice]
+            else:
+                print("❌ Invalid choice! Please enter 1, 2, or 3.")
+                continue
+                
+        except KeyboardInterrupt:
+            print("\n❌ Operation cancelled!")
+            return None
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            return None
+
 def get_strategy_selection():
     """Get strategy selection"""
     print("\nSelect Strategy:")

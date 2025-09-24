@@ -59,7 +59,15 @@ def display_trade_history(portfolio):
         print(f"{'Date':<12} {'Action':<6} {'Price':<8} {'Shares':<10} {'Value':<10} {'Cash':<10}")
         print("-" * 70)
         for trade in portfolio.trades:
-            value = trade['cost'] if trade['action'] == 'BUY' else trade['proceeds']
+            # Handle different trade types
+            if trade['action'] in ['BUY', 'LONG', 'SHORT']:
+                value = trade['cost']
+            elif trade['action'] in ['SELL', 'EXIT_LONG']:
+                value = trade.get('proceeds', trade.get('cost', 0))
+            elif trade['action'] == 'EXIT_SHORT':
+                value = trade['cost']
+            else:
+                value = trade.get('proceeds', trade.get('cost', 0))
             print(f"{trade['date']:<12} {trade['action']:<6} ${trade['price']:<7.2f} {trade['shares']:<10.4f} ${value:<9.2f} ${trade['cash_remaining']:<9.2f}")
 
 def display_strategy_performance(data, entry_col1, entry_col2, exit_col1, exit_col2):

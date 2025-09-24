@@ -1,0 +1,20 @@
+============= Long Only ====================================
+BUY Signal:
+Calculate trade_amount from available_cash
+Calculate shares_to_buy from trade_amount / price
+Calculate cost from shares_to_buy * price
+Update shares += shares_to_buy
+Update cash -= cost
+Update available_cash -= cost
+Set position = "IN"
+SELL Signal:
+Calculate proceeds from shares * price
+Update cash += proceeds
+Update available_cash += proceeds
+Reset shares = 0
+Set position = "OUT"
+
+=========== Short Only =========================================
+
+100$ cash --> sold iphone for 100$ now got 100$ cash and 100$ as margin. I can use my 100$ for new trades but cant
+use margin because that will be used to cover loss. 
