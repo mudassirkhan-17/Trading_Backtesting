@@ -265,6 +265,19 @@ def execute_trading_strategy(data, portfolio):
         current_price = data['Close'].iloc[i]
         current_date = data.index[i]
         
+        # LIQUIDATION CHECK (highest priority for short positions)
+        if portfolio.check_liquidation(current_price):
+            if portfolio.liquidate_position(current_price, current_date):
+                print(f"🚨 LIQUIDATION: Position closed at ${current_price:.2f}")
+                data.loc[i, 'Position'] = 'OUT'
+                data.loc[i, 'Action'] = 'LIQUIDATION'
+                data.loc[i, 'Reason'] = 'Liquidation - Loss exceeded 100% of available cash'
+                current_position = 'OUT'
+                data.loc[i, 'Portfolio_Value'] = portfolio.get_portfolio_value(current_price)
+                data.loc[i, 'Cash'] = portfolio.cash
+                data.loc[i, 'Shares'] = portfolio.shares
+                continue
+        
         # First, check trailing stop if we're IN position (highest priority)
         if current_position == 'IN':
             trailing_result = portfolio.update_trailing_stop(current_price)
@@ -364,6 +377,19 @@ def execute_trading_strategy_original(data, portfolio, strategy_direction):
     for i in range(len(data)):
         current_price = data['Close'].iloc[i]
         current_date = data.index[i]
+        
+        # LIQUIDATION CHECK (highest priority for short positions)
+        if portfolio.check_liquidation(current_price):
+            if portfolio.liquidate_position(current_price, current_date):
+                print(f"🚨 LIQUIDATION: Position closed at ${current_price:.2f}")
+                data.loc[i, 'Position'] = 'OUT'
+                data.loc[i, 'Action'] = 'LIQUIDATION'
+                data.loc[i, 'Reason'] = 'Liquidation - Loss exceeded 100% of available cash'
+                current_position = 'OUT'
+                data.loc[i, 'Portfolio_Value'] = portfolio.get_portfolio_value(current_price)
+                data.loc[i, 'Cash'] = portfolio.cash
+                data.loc[i, 'Shares'] = portfolio.shares
+                continue
         
         # Risk management checks (same as before)
         if current_position == 'IN':
@@ -711,7 +737,7 @@ def run_multi_ticker_strategy(config):
     print(f"\n📈 Running strategy on all tickers...")
     for ticker in config['tickers']:
         print(f"  Processing {ticker}...")
-        data = portfolio.run_strategy_on_ticker(ticker, config['period'], config['interval'], config)
+        data = portfolio.run_strategy_on_ticker(ticker, config['period'], config['interval'], config, detect_strategy_signals, execute_trading_strategy, execute_trading_strategy_original)
         if data is None:
             print(f"  ❌ Failed to process {ticker}")
             return
@@ -745,7 +771,7 @@ def run_multi_ticker_multi_strategy(config):
     print(f"\n📈 Running individual strategies on all tickers...")
     for ticker in config['tickers']:
         print(f"  Processing {ticker} with its unique strategy...")
-        data = portfolio.run_strategy_on_ticker(ticker, config['period'], config['interval'])
+        data = portfolio.run_strategy_on_ticker(ticker, config['period'], config['interval'], detect_strategy_signals, execute_trading_strategy, execute_trading_strategy_original)
         if data is None:
             print(f"  ❌ Failed to process {ticker}")
             return
@@ -805,6 +831,21 @@ def main():
                 return
             except Exception as e:
                 print(f"❌ Error: {e}")
+                return
+        
+        # Ask about liquidation for short strategies
+        if strategy_direction in ["Short Only", "Long/Short Reversal"]:
+            print(f"\n--- LIQUIDATION PROTECTION ---")
+            print("When opening a short position, liquidation will be triggered when your loss reaches 100% of your available cash.")
+            print("This prevents total account wipeout and simulates real-world broker behavior.")
+            liquidation_choice = input("Do you want to proceed with short selling? (y/n) [default: y]: ").lower().strip()
+            
+            # If empty input, default to 'y'
+            if not liquidation_choice:
+                liquidation_choice = 'y'
+            
+            if liquidation_choice != 'y':
+                print("❌ Short selling cancelled. Please choose Long Only strategy.")
                 return
         
         show_trading_examples()

@@ -3,12 +3,34 @@ from metrics import *
 from display import *
 from comparisons import *
 from inputs import *
-from new12 import execute_trading_strategy, detect_strategy_signals, execute_trading_strategy_original
+# Removed circular import - functions will be passed as parameters
 
 
+""" This files contains three classes:
+1. Portfolio --> Single Ticker Portfolio
+2. MultiTickerPortfolio
+3. MultiTickerMultiStrategyPortfolio
+"""
+"""the portfolio class is the main class that is used to manage the portfolio and the trades"""
+"""the MultiTickerPortfolio class is used to manage the portfolio and the trades for multiple tickers"""
+"""the MultiTickerMultiStrategyPortfolio class is used to manage the portfolio and the trades for multiple tickers with different strategies"""
 
+
+"""buy and enter long are same thing"""
+"""sell and exit long are same thing"""
+
+"""just calculating basic things, long --> buy stocks so number of stocks, 
+short --> sell stocks so number of cash then matrices, positions, risk management orders,
+ trailing stop, etc."""
 
 class Portfolio:
+
+    
+    """set_stop_loss, set_take_profit, clear_orders, set_trailing_stop, update_trailing_stop,
+     clear_trailing_stop, check_risk_orders, buy, sell, enter_long, enter_short, 
+     get_portfolio_value, get_performance, set_trade_size_percentage"""
+
+    
     def __init__(self, initial_cash=100, trade_size_percentage=100, trade_size_dollars=None, trade_type="percentage"):
         self.initial_cash = initial_cash
         self.cash = initial_cash
@@ -42,7 +64,10 @@ class Portfolio:
         self.short_shares = 0     # Negative: shares shorted (short position)
         self.position = "OUT"     # "OUT", "LONG", "SHORT"
         self.margin_used = 0      # Cash used as margin for shorting
-    
+
+    """set_stop_loss doesnt do anything it just sets the stop_loss_percentage or stop_loss_dollars
+    method is just a placeholder for the risk management orders""" 
+
     def set_stop_loss(self, percentage=None, dollars=None):
         """Set stop-loss order (percentage or dollar amount)"""
         if percentage is not None:
@@ -54,6 +79,9 @@ class Portfolio:
         else:
             raise ValueError("Must specify either percentage or dollars")
     
+    """set_take_profit doesnt do anything it just sets the take_profit_percentage or take_profit_dollars
+    method is just a placeholder for the risk management orders""" 
+
     def set_take_profit(self, percentage=None, dollars=None):
         """Set take-profit order (percentage or dollar amount)"""
         if percentage is not None:
@@ -65,6 +93,8 @@ class Portfolio:
         else:
             raise ValueError("Must specify either percentage or dollars")
     
+    """clear_orders doesnt do anything it just clears the stop_loss_percentage, take_profit_percentage,
+    stop_loss_dollars, take_profit_dollars, and orders_active""" 
     def clear_orders(self):
         """Clear all stop-loss and take-profit orders"""
         self.stop_loss_percentage = None
@@ -73,6 +103,9 @@ class Portfolio:
         self.take_profit_dollars = None
         self.orders_active = False
     
+    """set_trailing_stop doesnt do anything it just sets the trailing_stop_percentage or trailing_stop_dollars
+    method is just a placeholder for the risk management orders""" 
+
     def set_trailing_stop(self, percentage=None, dollars=None):
         """Set trailing stop-loss order (percentage or dollar amount)"""
         if percentage is not None:
@@ -87,6 +120,9 @@ class Portfolio:
         self.trailing_stop_active = True
         print(f"✅ Trailing stop set: {percentage}%" if percentage else f"✅ Trailing stop set: ${dollars}")
     
+    """update_trailing_stop doesnt do anything it just updates the trailing_stop_price based on the current_price
+    method is just a placeholder for the risk management orders""" 
+
     def update_trailing_stop(self, current_price):
         """Update trailing stop and check if triggered"""
         # Check if we have a position to manage
@@ -137,6 +173,9 @@ class Portfolio:
         
         return None
     
+    """clear_trailing_stop doesnt do anything it just clears the trailing_stop_percentage, trailing_stop_dollars,
+    highest_price, trailing_stop_price, and trailing_stop_active""" 
+
     def clear_trailing_stop(self):
         """Clear trailing stop order"""
         self.trailing_stop_percentage = None
@@ -145,6 +184,8 @@ class Portfolio:
         self.trailing_stop_price = 0
         self.trailing_stop_active = False
     
+    """check_risk_orders doesnt do anything it just checks if the stop_loss_percentage or stop_loss_dollars
+    or take_profit_percentage or take_profit_dollars is triggered based on the current_price and current_date""" 
     def check_risk_orders(self, current_price, current_date):
         """Check if stop-loss or take-profit orders should be triggered"""
         if not self.orders_active or self.entry_price == 0:
@@ -204,6 +245,7 @@ class Portfolio:
         else:
             return None, None
         
+    """Calculate the trade amount and then just buys the shares and hold it"""  
     def buy(self, price, date, shares_to_buy=None):
         """Execute buy order with position sizing"""
         if shares_to_buy is None:
@@ -249,7 +291,9 @@ class Portfolio:
             return True
         return False
     
+    """It sell the bought shares and add cash into real portfolio""" 
     def sell(self, price, date, reason="Strategy"):
+        
         """Execute sell order"""
         if self.shares > 0:
             proceeds = self.shares * price
@@ -278,6 +322,7 @@ class Portfolio:
             return True
         return False
     
+    """Calculate the trade amount and then just buys the shares and hold it""" 
     def enter_long(self, price, date, shares_to_buy=None):
         """Enter long position (buy shares)"""
         if self.position != "OUT":
@@ -288,6 +333,7 @@ class Portfolio:
             if self.trade_type == "dollars" and self.trade_size_dollars is not None:
                 trade_amount = min(self.trade_size_dollars, self.available_cash)
             else:
+                # Use available cash for 100% trades (this IS the total portfolio value)
                 trade_amount = self.available_cash * (self.trade_size_percentage / 100)
             shares_to_buy = trade_amount / price
         
@@ -324,6 +370,7 @@ class Portfolio:
             return True
         return False
     
+    """It sell the bought shares and add cash into real portfolio""" 
     def enter_short(self, price, date, shares_to_short=None):
         """Enter short position (short shares)"""
         if self.position != "OUT":
@@ -334,6 +381,7 @@ class Portfolio:
             if self.trade_type == "dollars" and self.trade_size_dollars is not None:
                 trade_amount = min(self.trade_size_dollars, self.available_cash)
             else:
+                # Use available cash for 100% trades (this IS the total portfolio value)
                 trade_amount = self.available_cash * (self.trade_size_percentage / 100)
             shares_to_short = trade_amount / price
         
@@ -342,7 +390,8 @@ class Portfolio:
         if margin_required <= self.available_cash:
             self.short_shares = -shares_to_short  # Negative for short position
             self.long_shares = 0
-            self.cash += margin_required  # Get cash from short sale
+            # For short selling: use existing cash as margin (no extra cash created)
+            # DO NOT add extra cash: self.cash += margin_required  # WRONG!
             self.available_cash -= margin_required  # Reserve as margin
             self.position = "SHORT"
             self.entry_price = price
@@ -371,6 +420,8 @@ class Portfolio:
             return True
         return False
     
+    """it just exits the position and add cash into real portfolio"""
+
     def exit_position(self, price, date, reason="Strategy"):
         """Exit current position (long or short)"""
         if self.position == "LONG" and self.long_shares > 0:
@@ -404,7 +455,8 @@ class Portfolio:
             cost = shares_to_buy * price
             if cost <= self.cash:
                 self.cash -= cost
-                self.available_cash += self.margin_used  # Return margin
+                # After exit, available cash = current cash (no margin to return)
+                self.available_cash = self.cash
                 self.trades.append({
                     'date': date,
                     'action': 'EXIT_SHORT',
@@ -426,6 +478,9 @@ class Portfolio:
                 return True
         return False
     
+    """it just calculates the portfolio value based on the current_price"""
+    
+    """for old system compatibility"""
     def get_portfolio_value(self, current_price):
         """Calculate total portfolio value"""
         # Legacy support for old shares attribute
@@ -443,8 +498,16 @@ class Portfolio:
         else:  # OUT position
             return self.cash
     
+    """it just calculates the performance metrics based on the current_price and data"""
+
+    """Calculate performance metrics including advanced analytics
+        
+        initial_cash, current_value, total_return, return_pct, cash, shares,
+         available_cash, total_trades, trade_size_percentage, advanced_metrics"""
+
     def get_performance(self, current_price, data=None):
-        """Calculate performance metrics including advanced analytics"""
+
+         
         current_value = self.get_portfolio_value(current_price)
         total_return = current_value - self.initial_cash
         return_pct = (total_return / self.initial_cash) * 100
@@ -469,12 +532,85 @@ class Portfolio:
         
         return basic_metrics
     
+    """it just sets the trade_size_percentage"""
+    
     def set_trade_size_percentage(self, percentage):
         """Set the percentage of available cash to use per trade"""
         if 0 < percentage <= 100:
             self.trade_size_percentage = percentage
         else:
             raise ValueError("Trade size percentage must be between 0 and 100")
+    
+    # ===== LIQUIDATION METHODS =====
+    
+    def check_liquidation(self, current_price):
+        """Check if portfolio should be liquidated due to losses (100% threshold)"""
+        if self.position == "SHORT":
+            # Calculate unrealized loss for short position
+            # For short: profit when price goes down, loss when price goes up
+            # Loss = (current_price - entry_price) * shares (positive when price goes up)
+            unrealized_loss = (current_price - self.entry_price) * abs(self.short_shares)
+            
+            # Check if loss exceeds 100% of margin used
+            # 100% liquidation means loss equals 100% of the margin we put up
+            if unrealized_loss >= self.margin_used * 1.0:
+                return True  # LIQUIDATION TRIGGERED!
+        return False
+    
+    def liquidate_position(self, price, date):
+        """Force close position due to liquidation"""
+        if self.position == "SHORT":
+            # Calculate cost to cover short
+            shares_to_buy = abs(self.short_shares)
+            cost = shares_to_buy * price
+            
+            # Check if we have enough cash
+            if cost <= self.cash:
+                # Force buy back shares
+                self.cash -= cost
+                # DO NOT return margin - it's gone after liquidation!
+                
+                # Record liquidation trade
+                self.trades.append({
+                    'date': date,
+                    'action': 'LIQUIDATION',
+                    'price': price,
+                    'shares': shares_to_buy,
+                    'cost': cost,
+                    'cash_remaining': self.cash,
+                    'available_cash': self.cash,  # Available cash = remaining cash
+                    'reason': 'Liquidation - Loss exceeded 100% of available cash',
+                    'position': 'OUT'
+                })
+                
+                # Reset position
+                self.short_shares = 0
+                self.position = "OUT"
+                self.entry_price = 0
+                self.entry_date = None
+                self.orders_active = False
+                self.margin_used = 0
+                self.clear_trailing_stop()
+                
+                return True
+        return False
+
+"""MultiTickerPortfolio class is used to manage the portfolio and the trades for multiple tickers"""
+"""it just sets the trade_size_percentage"""
+"""it just sets the trade_size_dollars"""
+"""it just sets the trade_type"""
+"""it just sets the total_capital"""
+"""it just sets the allocations"""
+"""it just sets the ticker_capital"""
+
+"""it just adds the ticker to the portfolio
+elf.portfolios[ticker] = portfolio  # ← Ticker is the KEY!
+self.portfolios = {
+    "AAPL": Portfolio(initial_cash=6000, ...),  # ← AAPL portfolio
+    "MSFT": Portfolio(initial_cash=4000, ...),  # ← MSFT portfolio
+    "GOOGL": Portfolio(initial_cash=2000, ...)  # ← GOOGL portfolio
+}
+"""
 
 class MultiTickerPortfolio:
     """Portfolio class for managing multiple tickers with allocation percentages and position sizing"""
@@ -505,7 +641,7 @@ class MultiTickerPortfolio:
         
         # Create portfolio for this ticker
         capital = self.ticker_capital[ticker]
-        trade_size_pct = self.trade_size_percentages.get(ticker, 10)
+        trade_size_pct = self.trade_size_percentages.get(ticker, 100)
         trade_size_dollars = self.trade_size_dollars.get(ticker)
         
         portfolio = Portfolio(
@@ -556,7 +692,7 @@ class MultiTickerPortfolio:
             self.ticker_data[ticker] = data
         return data
     
-    def run_strategy_on_ticker(self, ticker, period, interval, strategy_config):
+    def run_strategy_on_ticker(self, ticker, period, interval, strategy_config, detect_strategy_signals, execute_trading_strategy, execute_trading_strategy_original):
         """Run strategy on a specific ticker"""
         data = self.get_ticker_data(ticker, period, interval)
         if data is None:
@@ -564,7 +700,7 @@ class MultiTickerPortfolio:
         
         # Create portfolio for this ticker
         allocated_capital = self.ticker_capital[ticker]
-        trade_size = self.trade_size_percentages.get(ticker, 10)
+        trade_size = self.trade_size_percentages.get(ticker, 100)
         
         portfolio = Portfolio(
             initial_cash=allocated_capital,
@@ -640,7 +776,7 @@ class MultiTickerPortfolio:
         print("\n📊 PORTFOLIO ALLOCATION:")
         for ticker, percentage in self.allocations.items():
             capital = self.ticker_capital[ticker]
-            trade_size = self.trade_size_percentages.get(ticker, 10)
+            trade_size = self.trade_size_percentages.get(ticker, 100)
             print(f"  {ticker}: {percentage}% (${capital:,.2f}) - Trade Size: {trade_size}%")
         
         print(f"\n📈 COMBINED PERFORMANCE:")
@@ -686,7 +822,7 @@ class MultiTickerMultiStrategyPortfolio:
         
         # Create portfolio for this ticker
         capital = self.ticker_capital[ticker]
-        trade_size_pct = self.trade_size_percentages.get(ticker, 10)
+        trade_size_pct = self.trade_size_percentages.get(ticker, 100)
         trade_size_dollars = self.trade_size_dollars.get(ticker)
         
         portfolio = Portfolio(
@@ -744,7 +880,7 @@ class MultiTickerMultiStrategyPortfolio:
             self.ticker_data[ticker] = data
         return data
     
-    def run_strategy_on_ticker(self, ticker, period, interval):
+    def run_strategy_on_ticker(self, ticker, period, interval, detect_strategy_signals, execute_trading_strategy, execute_trading_strategy_original):
         """Run individual strategy on a specific ticker"""
         if ticker not in self.ticker_strategies:
             print(f"❌ No strategy configured for {ticker}")
@@ -761,7 +897,7 @@ class MultiTickerMultiStrategyPortfolio:
         # Create portfolio for this ticker if it doesn't exist
         if ticker not in self.portfolios:
             allocated_capital = self.ticker_capital[ticker]
-            trade_size = self.trade_size_percentages.get(ticker, 10)
+            trade_size = self.trade_size_percentages.get(ticker, 100)
             
             self.portfolios[ticker] = Portfolio(
                 initial_cash=allocated_capital,
@@ -840,7 +976,7 @@ class MultiTickerMultiStrategyPortfolio:
         print(f"\n📊 PORTFOLIO ALLOCATION:")
         for ticker, percentage in self.allocations.items():
             capital = self.ticker_capital[ticker]
-            trade_size = self.trade_size_percentages.get(ticker, 10)
+            trade_size = self.trade_size_percentages.get(ticker, 100)
             print(f"  {ticker}: {percentage}% (${capital:,.2f}) - Trade Size: {trade_size}%")
         
         # Display individual strategies
@@ -872,7 +1008,7 @@ class MultiTickerMultiStrategyPortfolio:
         
         for ticker, performance in self.ticker_performance.items():
             allocation = self.allocations[ticker]
-            trade_size = self.trade_size_percentages.get(ticker, 10)
+            trade_size = self.trade_size_percentages.get(ticker, 100)
             print(f"{ticker:<8} {allocation:>8}% {trade_size:>10}% ${performance['initial_cash']:>10,.0f} ${performance['current_value']:>10,.0f} "
                   f"${performance['total_return']:>10,.0f} {performance['return_pct']:>8.1f}% {performance['total_trades']:>6}")
         
@@ -880,7 +1016,7 @@ class MultiTickerMultiStrategyPortfolio:
         print(f"\n📈 TRADE HISTORY BY TICKER:")
         for ticker, portfolio in self.portfolios.items():
             if portfolio.trades:
-                print(f"\n{ticker} Trades (Trade Size: {self.trade_size_percentages.get(ticker, 10)}%):")
+                print(f"\n{ticker} Trades (Trade Size: {self.trade_size_percentages.get(ticker, 100)}%):")
                 print(f"{'Date':<12} {'Action':<6} {'Price':<8} {'Shares':<10} {'Value':<10} {'Cash':<10} {'Available':<10}")
                 print("-" * 80)
                 for trade in portfolio.trades:
@@ -945,7 +1081,7 @@ class MultiTickerMultiStrategyPortfolio:
         print(f"\n📊 PORTFOLIO ALLOCATION:")
         for ticker, percentage in self.allocations.items():
             capital = self.ticker_capital[ticker]
-            trade_size = self.trade_size_percentages.get(ticker, 10)
+            trade_size = self.trade_size_percentages.get(ticker, 100)
             print(f"  {ticker}: {percentage}% (${capital:,.2f}) - Trade Size: {trade_size}%")
         
         # Display strategies for each ticker
@@ -974,7 +1110,7 @@ class MultiTickerMultiStrategyPortfolio:
         
         for ticker, performance in self.ticker_performance.items():
             allocation = self.allocations[ticker]
-            trade_size = self.trade_size_percentages.get(ticker, 10)
+            trade_size = self.trade_size_percentages.get(ticker, 100)
             print(f"{ticker:<8} {allocation:>8}% {trade_size:>10}% ${performance['initial_cash']:>10,.0f} ${performance['current_value']:>10,.0f} "
                   f"${performance['total_return']:>10,.0f} {performance['return_pct']:>8.1f}% {performance['total_trades']:>6}")
         
@@ -982,7 +1118,7 @@ class MultiTickerMultiStrategyPortfolio:
         print(f"\n📈 TRADE HISTORY BY TICKER:")
         for ticker, portfolio in self.portfolios.items():
             if portfolio.trades:
-                print(f"\n{ticker} Trades (Trade Size: {self.trade_size_percentages.get(ticker, 10)}%):")
+                print(f"\n{ticker} Trades (Trade Size: {self.trade_size_percentages.get(ticker, 100)}%):")
                 print(f"{'Date':<12} {'Action':<6} {'Price':<8} {'Shares':<10} {'Value':<10} {'Cash':<10} {'Available':<10}")
                 print("-" * 80)
                 for trade in portfolio.trades:
